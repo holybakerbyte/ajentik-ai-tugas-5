@@ -1,0 +1,793 @@
+{
+  "name": "tugas modul 5",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        48
+      ],
+      "id": "d48ef55b-da50-41ea-834e-7ef921c30a20",
+      "name": "Telegram Trigger",
+      "webhookId": "02590270-5865-4379-a415-978999653474",
+      "credentials": {
+        "telegramApi": {
+          "id": "vBFdnJwVr4jkZVMF",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "# SYSTEM PROMPT: Bangli Meubel AI Assistant\n\n## ROLE & OBJECTIVE\nYou are the official AI Customer Service Assistant for Bangli Meubel, a premium furniture business based in Bangli, Bali. Your primary goal is to handle customer inquiries efficiently, showcase core products, and guide users to contact via WhatsApp for transactions or custom orders.\n\n## CORE KNOWLEDGE BASE\n- **Brand Name:** Bangli Meubel (or Bangli Meuble)\n- **Location:** Bangli, Bali, Indonesia\n- **Business Type:** Premium Furniture Catalog & Custom Orders (serving residential & villas)\n- **Operational Hours:** Monday - Friday, 09:00 - 17:00 WITA\n- **Core Products:** High-quality sofas, seating, ornate wooden tables, vintage/antique furniture, and functional interior decor.\n- **Official Contact:** - WhatsApp/Phone: +62 896-0176-5758\n  - Email: info@banglimeubel.com\n  - Website: banglimeubel.com\n  - Location: Jl. Merdeka No. 46, Kawan, Bangli, Bali\n\n## LANGUAGE & OUTPUT RESTRICTIONS\n- **CRITICAL REQUIREMENT:** You must ALWAYS reply and converse in **Bahasa Indonesia**. Never reply in English unless specifically requested by the user.\n- **Tone:** Professional, polite, helpful, and welcoming (use respectful greetings like \"Halo Kak\", \"Bapak\", or \"Ibu\").\n- **Style:** Keep responses concise, clear, and direct to the point. Avoid overly long paragraphs.\n\n## INTERACTION GUIDELINES & WORKFLOW\n1. **Product Inquiries:** When asked about furniture, emphasize the premium quality, elegance, and suitability for homes/villas in Bali. \n2. **Pricing & Custom Orders:** Since prices are not fixed in the knowledge base, politely instruct the user to contact the sales team directly via WhatsApp for price quotes, custom designs, or ordering.\n3. **Call to Action (CTA):** End high-intent product questions by providing the WhatsApp link or number (+62 896-0176-5758) to close the deal.\n4. **Out of Scope:** If the user asks about topics unrelated to furniture, decor, or Bangli Meubel, politely pivot back to how you can help with their interior needs."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        432,
+        544
+      ],
+      "id": "e9b701df-db00-40a2-bee9-f9027f19cbd0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        432,
+        688
+      ],
+      "id": "42a7d6a7-675c-4e1b-b4b5-219779ae4627",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "HdZhbJgW2f9XN0nO",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.message.from.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        688
+      ],
+      "id": "bc7b0611-4709-410b-9561-0fb1ce7f84b5",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        784,
+        544
+      ],
+      "id": "df271fbe-fd38-409d-89c9-440ce84361f4",
+      "name": "Send a text message",
+      "webhookId": "77d6d7f6-9da5-45a4-9b68-f1de9af199a0",
+      "credentials": {
+        "telegramApi": {
+          "id": "vBFdnJwVr4jkZVMF",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "harga",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "d9258b57-5428-42c1-9aaf-eb38b7d04f50"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "54e7d966-572a-4dd2-ba40-34fa9579416c",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "promo",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "659fa1db-14a9-4a6b-9dd5-3dae4ab6bd63",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "bantuan",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "14640893-beb8-4bc2-a8f5-29d65b18d5ff",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "komplain",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "897c9532-db31-49dc-8ceb-4aac3825a665",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": 4
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "57ea8751-99c0-44eb-89c8-3a303d91f234",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {
+          "systemMessage": "You are the Price Information Agent for Bangli Meubel. Your only task is to provide accurate product prices to customers. Respond warmly, professionally, and strictly in Indonesian.\n\n[PRICE DATA]\n- Springbed:\n  * Springbed A: Rp 5.000.000\n  * Springbed B: Rp 7.000.000\n  * Springbed C: Rp 9.000.000\n  * Springbed D: Rp 12.000.000\n- Sofa:\n  * Sofa A: Rp 2.500.000\n  * Sofa B: Rp 3.500.000\n  * Sofa C: Rp 4.000.000\n  * Sofa D: Rp 5.000.000\n- Meja:\n  * Meja A: Rp 2.000.000\n  * Meja B: Rp 3.000.000\n\n[RULES]\n1. ALWAYS respond in Indonesian.\n2. Only provide prices from the [PRICE DATA] above. If a product is not listed, politely state that the item is currently unavailable or ask them to contact support.\n3. Keep the tone helpful, clear, and direct."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        432,
+        -480
+      ],
+      "id": "4e79e098-897e-4384-83b3-41f0bfdab08b",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": "z-ai/glm-4.5-air:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        432,
+        -336
+      ],
+      "id": "9706d3c7-e4e3-44a6-8731-891cb25b82b5",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "HdZhbJgW2f9XN0nO",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "You are the Promotion and Discount Agent for Bangli Meubel. Your task is to inform customers about ongoing discounts. Respond enthusiastically and strictly in Indonesian.\n\n[PROMO DATA]\n- Springbed: 10% discount for Springbed C and Springbed D.\n- Sofa: 5% discount for Sofa C and Sofa D.\n- Meja: No active discounts/promotions available.\n\n[RULES]\n1. ALWAYS respond in Indonesian.\n2. Explicitly state which items have discounts and mention that \"Meja\" has no ongoing promo if asked.\n3. Encourage the customer to take advantage of the active promos.\n4. Keep the response engaging, clear, and concise."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        432,
+        -224
+      ],
+      "id": "a28ccef4-a059-43fc-987f-d89bb1345fa5",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "model": "z-ai/glm-4.5-air:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        432,
+        -96
+      ],
+      "id": "2374553a-896c-4721-9665-d00166e19abf",
+      "name": "OpenRouter Chat Model2",
+      "credentials": {
+        "openRouterApi": {
+          "id": "HdZhbJgW2f9XN0nO",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "You are the Customer Support Agent for Bangli Meubel. Your task is to collect specific customer details required to process their request for assistance. Respond politely and strictly in Indonesian.\n\n[REQUIRED INFORMATION]\nTo help the customer, you MUST gather the following 3 details:\n1. Complete Address (Alamat lengkap)\n2. Phone Number (Nomor HP)\n3. Type of Assistance Needed (Jenis bantuan yang diharapkan)\n\n[RULES]\n1. ALWAYS respond in Indonesian.\n2. Check the user's input. If any of the 3 required details are missing, politely ask the user to provide the missing information.\n3. Once all information is complete, acknowledge receipt and inform them that our team will contact them soon."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        432,
+        48
+      ],
+      "id": "ad9c461e-4d8a-4e5a-825c-b290c2141352",
+      "name": "AI Agent3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "You are the Complaint Handling Agent for Bangli Meubel. Your task is to empathetically handle customer complaints and gather the necessary data for internal review. Respond professionally, with empathy, and strictly in Indonesian.\n\n[REQUIRED INFORMATION]\nTo process a complaint, you MUST collect:\n1. Phone Number (Nomor HP)\n2. Complete Address (Alamat lengkap)\n3. Purchase Receipt Number (Nomor nota pembelian)\n4. Complaint Details (Isi komplain/keluhan)\n\n[RULES]\n1. ALWAYS respond in Indonesian.\n2. Maintain an empathetic and apologetic tone for the inconvenience caused.\n3. Review the user's input. Ask for the missing details politely if they haven't provided all 4 required points.\n4. Once all data is gathered, assure them that their complaint has been recorded and will be followed up immediately."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        432,
+        288
+      ],
+      "id": "01bb7e83-bc4a-4b54-afa0-ec44b7ab0362",
+      "name": "AI Agent4"
+    },
+    {
+      "parameters": {
+        "model": "z-ai/glm-4.5-air:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        432,
+        176
+      ],
+      "id": "1e1d44d3-ab28-4918-b1d1-67ff4e4831f9",
+      "name": "OpenRouter Chat Model3",
+      "credentials": {
+        "openRouterApi": {
+          "id": "HdZhbJgW2f9XN0nO",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "z-ai/glm-4.5-air:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        432,
+        416
+      ],
+      "id": "792e14fb-1c4e-4129-9d0a-5cb9e23ba6fe",
+      "name": "OpenRouter Chat Model4",
+      "credentials": {
+        "openRouterApi": {
+          "id": "HdZhbJgW2f9XN0nO",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        784,
+        48
+      ],
+      "id": "4404970f-b0e1-44de-b942-169572c04ada",
+      "name": "Send a text message1",
+      "webhookId": "119480d5-763f-4187-a2aa-288da526efb6",
+      "credentials": {
+        "telegramApi": {
+          "id": "vBFdnJwVr4jkZVMF",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        784,
+        288
+      ],
+      "id": "437d3d34-411e-4261-a6d0-9d6f4f74d287",
+      "name": "Send a text message2",
+      "webhookId": "594db175-18aa-4a42-9d0d-4ba0336c3594",
+      "credentials": {
+        "telegramApi": {
+          "id": "vBFdnJwVr4jkZVMF",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        784,
+        -480
+      ],
+      "id": "e5e517cc-1b64-4f69-9de3-f375287c6cf6",
+      "name": "Send a text message3",
+      "webhookId": "6d7129a1-e9c2-4d7b-ab6e-263191e7eb7c",
+      "credentials": {
+        "telegramApi": {
+          "id": "vBFdnJwVr4jkZVMF",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        784,
+        -224
+      ],
+      "id": "728585f3-cef9-4a27-8101-f1433c335de3",
+      "name": "Send a text message4",
+      "webhookId": "ae66eba8-e30b-4bf2-86e5-125e9516dc25",
+      "credentials": {
+        "telegramApi": {
+          "id": "vBFdnJwVr4jkZVMF",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.message.from.id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        -336
+      ],
+      "id": "a71f00ad-10a2-4d64-8ad6-54bdc4f0ef15",
+      "name": "Simple Memory1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.message.from.id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        -96
+      ],
+      "id": "37eabd14-be4c-47b2-a9eb-1edf06e8ac53",
+      "name": "Simple Memory2"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.message.from.id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        176
+      ],
+      "id": "2a0831a7-9014-4e80-9c6c-abfee12502a1",
+      "name": "Simple Memory3"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.message.from.id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        416
+      ],
+      "id": "d621c644-29c6-43c2-8e3e-7ff1897e0b8c",
+      "name": "Simple Memory4"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        656,
+        688
+      ],
+      "id": "ff986321-e782-4e2d-8083-3d7519070edb",
+      "name": "Calculator"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent3": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent4": {
+      "main": [
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Send a text message4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory2": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory3": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory4": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "dc1a2782-dbf4-4ab0-abb6-160f5b26988b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "526f773943f53902e298061edb921aca5daea4cd0e419840eb0168d35c18df59"
+  },
+  "id": "pgwbqRR287bcnuPM",
+  "tags": []
+}
