@@ -42,8 +42,8 @@ Before deploying the configuration, ensure you have the following services activ
 
 1.  **Clone the Repository:**
     ```bash
-    git clone (https://github.com/holybakerbyte/ajentik-ai-tugas-5/)
-    cd bangli-meubel-n8n-bot
+    git clone https://github.com/holybakerbyte/ajentik-ai-tugas-5
+    cd ajentik-ai-tugas-5
     ```
 2.  **Import to n8n:**
     * Open your n8n workspace browser UI.
