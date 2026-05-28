@@ -2,110 +2,83 @@
 repository for agentic ai course
 
 Ini adalah tugas 5 mata kuliah agnetic ai, batch 1, di Kelas Otomesyen.
-# Bangli Meubel Chatbot Automation via Telegram and n8n
+# Customer Service AI Agent - Toko Sejahtera (n8n Workflow)
 
-This repository contains the production-ready n8n workflow JSON file for the **Bangli Meubel** Telegram AI Assistant chatbot. Built using n8n's Advanced AI components, the workflow routes user queries based on dynamic intent recognition and leverages distinct multi-agent configurations to deliver contextual answers regarding furniture pricing, promotional tracking, customer support registration, and complaint ticket filing.
+This repository contains the workflow automation file built using **n8n** to deploy an Artificial Intelligence (AI) Customer Service Agent. The system seamlessly integrates a **Telegram Bot** as the customer interface and a **Google Sheet** as a real-time product inventory and price database.
 
-## Project Overview
-
-The Bangli Meubel Chatbot is designed to automate customer interactions for a premium furniture seller based in Bangli, Bali. The workflow acts as an intelligent router and handling layer:
-
-* **Telegram Integration:** Listens to incoming customer messages via Telegram Webhooks.
-* **Intent Router (Switch):** Filters requests conditionally based on text matching (`harga`, `promo`, `bantuan`, `komplain`).
-* **Multi-Agent Architecture:** Delegates execution paths to specialized LangChain AI Agents utilizing highly efficient LLM backends (via OpenRouter).
-* **Fallback General Agent:** Includes a memory-buffered master agent equipped with a calculation engine to handle open-ended design inquiries or general assistant conversations.
+This workflow is designed to intelligently detect customer intents, categorize their inquiries, and either generate automated contextual responses or route them through dedicated downstream operational paths.
 
 ---
 
-## System Architecture & Prompt Design
+## Workflow Component Overview
 
-The system relies on structured system prompts instructing agents to process data constraints in English while outputting responses exclusively in **Bahasa Indonesia**.
+Based on the architecture of the `tugas modul 5.json` file, the core components involved are:
 
-1.  **Price Agent (`AI Agent1`):** Houses static data blocks containing updated inventory pricing for products categorized under *Springbed* (A–D), *Sofa* (A–D), and *Meja* (A–B).
-2.  **Promo Agent (`AI Agent2`):** Directs absolute values of specific active model configurations (e.g., 10% off for high-end Springbeds, 5% off for specific Sofas).
-3.  **Customer Support Agent (`AI Agent3`):** Forces slot-filling behavior. It aggressively tracks down 3 parameters before submitting user data: *Address*, *Phone Number*, and *Assistance Scope*.
-4.  **Complaint Handling Agent (`AI Agent4`):** Operates under high empathy requirements. Mandates a 4-field verification validation sequence (*Phone*, *Address*, *Receipt Reference Number*, *Core Defect/Issue Description*).
-
----
-
-## Technical Prerequisites
-
-Before deploying the configuration, ensure you have the following services active:
-
-* **n8n Instance** (n8n v1+ supporting Advanced AI nodes)
-* **Telegram Bot Token** (Generated through [@BotFather](https://t.me/BotFather))
-* **OpenRouter API Key** (Configured with credit allocations for model execution endpoint routing)
+1. **Telegram Trigger**: Monitors and captures every incoming text message from customers via the Telegram bot chat.
+2. **AI Agent (LangChain)**: The core brain of the system that utilizes a Large Language Model (LLM) to analyze inputs, determine categories, and invoke tools dynamically based on system instructions.
+3. **Language Models (LLMs)**: Combines `models/gemini-2.0-flash` and an OpenRouter-hosted model (`z-ai/glm-4.5-air:free`).
+4. **Simple Memory (Window Buffer)**: Persists conversation history mapped to the customer's `chat.id`, allowing the AI agent to maintain context throughout multi-turn dialogues.
+5. **get prices tool (Google Sheets Tool)**: A specialized capability granted to the AI Agent to pull live inventory stock and price listings directly from the official Google Spreadsheet.
+6. **Structured Output Parser**: Enforces the AI Agent to strictly respond in a raw JSON schema containing only `category` and `reply` keys.
+7. **Switch Node**: Acts as a logical router that directs the workflow to different branches based on the evaluated payload `category`.
+8. **Set Nodes (Edit Fields)**: Standardizes static responses for operational queries (*promo*, *bantuan*, and *komplain*).
+9. **Send a Text Message (Telegram Node)**: Dispatches the final compiled answer back to the customer on Telegram using Markdown formatting.
 
 ---
 
-## Installation & Setup
+## AI Categorization & Routing Rules
 
-1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/holybakerbyte/ajentik-ai-tugas-5
-    cd ajentik-ai-tugas-5
-    ```
-2.  **Import to n8n:**
-    * Open your n8n workspace browser UI.
-    * Click on **Workflows** -> **Import from File** (`Add Workflow` dropdown).
-    * Select the file `tugas modul 5.json` from this repository.
-3.  **Link Credentials:**
-    * Open the **Telegram Trigger** and **Send a text message** nodes; create or link your `Telegram API` credentials.
-    * Open any **OpenRouter Chat Model** node; configure your `OpenRouter API` credentials.
-4.  **Activate Webhook:**
-    * Save the workflow and toggle the active state status in the upper right corner to **Active**.
+The AI Agent is hardcoded with a comprehensive system prompt to classify user inquiries into exactly one of five distinct categories:
+
+| Category | Trigger Condition | Action / Output Behavior |
+| :--- | :--- | :--- |
+| **`harga`** *(Price)* | Inquiries regarding product pricing, stock availability, or price lists. | **Must** execute the `get prices tool` to fetch real-time spreadsheet data before formulating an accurate, dynamic JSON response. |
+| **`promo`** *(Promotion)* | Inquiries about active discounts, member benefits, or sales. | Keeps the AI `reply` field blank; downstream routing falls back onto a static node detailing the **5% member discount**. |
+| **`bantuan`** *(Support)* | Inquiries about store location, operating address, or official contact numbers. | Keeps the AI `reply` field blank; downstream routing falls back onto a static node providing the **Bali branch address & WhatsApp contact**. |
+| **`komplain`** *(Complaint)* | Reports regarding damaged items, missing orders, or customer dissatisfaction. | Keeps the AI `reply` field blank; downstream routing falls back onto a static node prompting a structured **transaction issue form**. |
+| **`lainnya`** *(Other)* | Small talk, generic greetings (*hello*, *good morning*), or general compliments. | The AI directly generates a polite, contextual greeting response in Indonesian. |
 
 ---
 
-## User Manual (Cara Pakai)
+## How to Use & Deploy
 
-Once activated, customers interact with the bot seamlessly through the Telegram Messenger UI application:
+### 1. Prerequisites
+* A running instance of **n8n** (Cloud or Self-hosted).
+* A **Telegram Bot Token** (Obtainable via [@BotFather](https://t.me/BotFather)).
+* **Google Cloud Console Credentials** (OAuth2 configured with read permissions for the Google Sheets API).
+* API Keys for **Google Gemini** and/or **OpenRouter**.
 
-1.  **Initiating Conversation:** Search for your configured Bot username on Telegram and press **/start** or type any greeting text.
-2.  **Checking Catalog & Prices:** Send text queries mentioning the keyword `harga` along with your desired furniture category (e.g., *"Berapa harga sofa B?"*).
-3.  **Checking Active Deals:** Inquire using the keyword `promo` (e.g., *"Apakah ada promo untuk springbed?"*).
-4.  **Requesting Human Agent Assistance:** Type queries targeting `bantuan` (e.g., *"Saya perlu bantuan"*). The bot will engage in conversational loop constraints until you submit your complete contact details.
-5.  **Submitting Warranty or Post-Purchase Complaints:** Use the keyword `komplain` (e.g., *"Saya mau komplain barang rusak"*). Follow the conversational step questions to supply the transaction receipt marker.
+### 2. Import the Workflow to n8n
+1. Download the `tugas modul 5.json` file from this repository.
+2. Open your n8n workspace dashboard.
+3. Click the top-right menu icon (three dots/lines) -> select **Import from File**.
+4. Choose and upload `tugas modul 5.json`.
 
----
+### 3. Setup Your Credentials
+Once imported, connect your localized API accounts to the nodes displaying connection alerts:
+* **Telegram Trigger** & **Send a text message**: Link your active Telegram Bot Account credentials.
+* **Google Gemini Chat Model**: Input your Google Gemini API Key.
+* **OpenRouter Chat Model**: Input your OpenRouter API Key.
+* **get prices tool**: Authorize your Google OAuth2 account that has access to read the target spreadsheet.
 
-## Test Cases (Skenario Uji Coba)
-
-Run these validation pathways directly inside your Telegram Bot client to test systemic edge compliance and agent accuracy:
-
-### Test Case 1: Pricing Catalog Check
-* **User Input:** *"Halo, saya mau cek harga Springbed C dan Meja B"*
-* **Expected Behavior:** The `Switch` node routes to `AI Agent1`.
-* **Expected Bot Response:** The AI must explicitly return **Rp 9.000.000** for Springbed C and **Rp 3.000.000** for Meja B in clear, polite Bahasa Indonesia.
-
-### Test Case 2: Out of Stock / Unlisted Item Request
-* **User Input:** *"Berapa harga lemari pakaian premium?"*
-* **Expected Behavior:** The `Switch` node routes to `AI Agent1`.
-* **Expected Bot Response:** The AI must politely declare that wardrobes/lemari are not present in the current knowledge base catalogue and redirect the user to consult custom order procedures.
-
-### Test Case 3: Promotional Discount Match
-* **User Input:** *"Apakah ada promo potongan harga hari ini?"*
-* **Expected Behavior:** The `Switch` node routes to `AI Agent2`.
-* **Expected Bot Response:** The AI responds enthusiastically stating that there is a **10% discount** for Springbed C & D, a **5% discount** for Sofa C & D, and explicitly clarifies that there are no current promotional campaigns for tables ("Meja").
-
-### Test Case 4: Ticket Slot-Filling Loop (Customer Support)
-* **User Input:** *"Saya butuh bantuan pasang furniture"*
-* **Expected Behavior:** The `Switch` node routes to `AI Agent3`.
-* **Expected Bot Response:** The bot thanks the user, but notes that parameters are missing. It requests the user's complete **Address** and **Phone Number** to log the assembly request.
-* **Follow-up Input:** *"Jalan Merdeka No. 10, HP 0812345678"*
-* **Expected Final Response:** The agent detects all requirements have been met, acknowledges data capture completion, and confirms an interior specialist will reach out soon.
-
-### Test Case 5: Empathetic Complaint Processing
-* **User Input:** *"Barang saya cacat, saya mau komplain!"*
-* **Expected Behavior:** The `Switch` node routes to `AI Agent4`.
-* **Expected Bot Response:** The AI delivers an immediate empathetic apology statement and requests 4 concrete data validations: *Phone Number, Complete Address, Purchase Receipt Number,* and *Complaint Details*.
-
-### Test Case 6: Fallback General Knowledge Routing
-* **User Input:** *"Bangli Meubel ini lokasinya di daerah mana ya? Dan buka jam berapa?"*
-* **Expected Behavior:** The `Switch` node triggers the fallback routing path and pushes data down to the master **AI Agent**.
-* **Expected Bot Response:** The bot accesses the foundational business knowledge profile matrix to answer that the storefront resides at **Jl. Merdeka No. 46, Kawan, Bangli, Bali**, and operates **Monday through Friday from 09:00 to 17:00 WITA**.
+### 4. Activate the Workflow
+Test the stream live by clicking **Listen for test event**, or simply toggle the **Publish** switch in the top-right corner to **On** to deploy the bot 24/7.
 
 ---
 
-## License
-Distributed under the MIT License. See `LICENSE` for more information.
+## QA Testing Matrix (Test Cases)
+
+You can validate the deterministic routing and AI outputs of your deployed Telegram Bot using the quality assurance matrix below:
+
+| ID | User Input (Telegram Chat) | Expected Category | Expected Output Response (System Criteria) | Status |
+| :---: | :--- | :---: | :--- | :---: |
+| **TC-01** | "Halo, selamat pagi Toko Sejahtera!" | `lainnya` | Generates an automated polite greeting. (e.g., "Selamat pagi! Ada yang bisa kami bantu hari ini?") | ⬜ Pass/Fail |
+| **TC-02** | "Berapa harga sabun cuci piring sekarang? Apakah ada stoknya?" | `harga` | Fetches real-time price variables from Google Sheets and answers with accurate numbers. | ⬜ Pass/Fail |
+| **TC-03** | "Apakah ada diskon atau promo minggu ini?" | `promo` | "Setiap anggota (member) Toko Sejahtera berhak mendapatkan potongan harga sebesar 5% untuk setiap transaksi dengan nilai pembelian di atas Rp 100.000." | ⬜ Pass/Fail |
+| **TC-04** | "Saya mau tahu alamat tokonya di mana ya? Sama nomor WA nya." | `bantuan` | "Untuk bantuan, silahkan hubungi Customer service kami via WA di 081934384508, atau datang langsung ke Toko Sejahtera di Jalan Ir. Soekarno No.5, Tabanan, Bali" | ⬜ Pass/Fail |
+| **TC-05** | "Barang yang saya beli kemarin pecah, gimana nih tanggung jawabnya?" | `komplain` | "Mohon maaf atas ketidaknyamanan yang terjadi. Mohon sertakan data berikut untuk kami proses. 1. Tanggal transaksi... [etc]" | ⬜ Pass/Fail |
+| **TC-06** | "Kalian luar biasa, pelayanannya cepat banget!" | `lainnya` | Generates a custom conversational thank-you response acknowledging the user's praise. | ⬜ Pass/Fail |
+
+
+
+
